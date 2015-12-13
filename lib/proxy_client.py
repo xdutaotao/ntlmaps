@@ -16,9 +16,10 @@
 # Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 #
-
+import re
 import string, socket, thread, select, time
 import logger, http_header, utils, ntlm_auth, basic_auth
+import re
 
 class proxy_HTTP_Client:
 
@@ -78,7 +79,17 @@ class proxy_HTTP_Client:
 
         # init record to debug_log
         self.logger.log('%s Version %s\n' % (time.strftime('%d.%m.%Y %H:%M:%S', time.localtime(time.time())), self.config['GENERAL']['VERSION']))
-    
+
+    def check_bluecoat(self):
+        m=self.client_head_obj.get_http_method()
+        if m == 'GET':
+            url = self.client_head_obj.get_http_url()
+            if re.search(self.config['GENERAL']['NOTIFY_HOST'],url) >= 0:
+                url = string.replace(url,self.config['GENERAL']['NOTIFY_KEY'],self.config['GENERAL']['ACCEPTED_KEY'])
+                self.client_head_obj.set_http_url(url)
+
+                self.logger.log(" replace notify-key with accepted-key to URL: " + url)
+
     #-----------------------------------------------------------------------
     def run(self):
         ""
@@ -86,7 +97,7 @@ class proxy_HTTP_Client:
 
         while(not self.stop_request):
 
-            # wait for data
+            # wait for data, rserver和client的buffer都是空
             if not (self.rserver_buffer or self.client_buffer):
                 # if buffers are empty
                 """
@@ -100,40 +111,47 @@ class proxy_HTTP_Client:
                 # first try and have stop request because rserver_socket_closed==1
                 # So let's try change socket_closed to socket. which is None if there is no
                 # connection
-                if not self.rserver_socket_closed:
+                if not self.rserver_socket_closed:   #rserver的socket未关闭
                     try:
+                        #监听rserver和client的socket
                         select.select([self.rserver_socket.fileno(), self.client_socket.fileno()], [], [], 5.0)
                     except (socket.error, select.error, ValueError):
                         thread.exit()
                 else:
                     # if there is no connection to remote server
                     try:
+                        #如果rserver的socket已关闭，则只监听client的socket
                         select.select([self.client_socket.fileno()], [], [], 5.0)
                     except socket.error:
                         thread.exit()
 
-            # client part
+            # client part #先读取client边的消息loop
             self.run_client_loop()
 
             if self.tunnel_mode: self.tunnel_client_data()
 
+            #如果client的header未发送，但是client head有效
             if not self.client_header_sent and self.client_head_obj:
-                if not self.rserver_socket_closed:
+                if not self.rserver_socket_closed:  #如果rserver socket有效
                     # if connected we have to check whether we are connected to the right host.
                     # if not then close connection
-                    self.check_connected_remote_server()
+                    self.check_connected_remote_server()  #
                 #if self.rserver_socket_closed:
                 if self.rserver_socket_closed:
                     # connect remote server if we have not yet
-                    self.connect_rserver()
+                    self.connect_rserver() # 如果与代理服务器断开了，则重新连接
 
                 self.log_url()
-                self.send_client_header()
 
-            if self.client_header_sent and (not self.client_data_sent):
+                #检测是否此请求为notify.bluecoat.com的notify请求（需要将对应的notify请求替换为accept请求，来完成验证）
+                self.check_bluecoat()
+
+                self.send_client_header()  #连接完后，就可以发送client的header给proxy了，且设置header已经发送标志
+
+            if self.client_header_sent and (not self.client_data_sent): #继续发送data到proxy
                 self.send_client_data()
 
-            if self.client_data_sent and self.rserver_data_sent:
+            if self.client_data_sent and self.rserver_data_sent:  #如果client和rserver上的data都已经发送完毕，则清空clientflag
                 # NOTE: we need to know if the request method is HEAD or CONNECT, so we cannot
                 # proceed to the next request header until response is not worked out
                 self.check_tunnel_mode()
@@ -141,23 +159,27 @@ class proxy_HTTP_Client:
 
             if self.config['DEBUG']['SCR_DEBUG']: print '\b.',
 
-            # Remote server part
+            # Remote server part 下面开始处理rserver部分
             if not self.rserver_socket_closed:
                 # if there is a connection to remote server
                 self.run_rserver_loop()
 
             if self.tunnel_mode: self.tunnel_rserver_data()
 
+            #如果header为发送，且header有效，则进行auth验证
             if (not self.rserver_header_sent) and self.rserver_head_obj:
                 self.auth_routine()                                # NTLM authorization
 
+            #如果header未发送，且header有效，则开始发送rserver的header部分
             if (not self.rserver_header_sent) and self.rserver_head_obj:
                 self.send_rserver_header()
                 self.check_rserver_response()
 
+            #如果rserver的header已经发送完，则继续发送rserver的data部分
             if self.rserver_header_sent and (not self.rserver_data_sent):
                 self.send_rserver_data()
 
+            #如果client的header不存在，且rserver的data已经发送完，则清掉rserver这里的flag，表示rserver端处理完
             if self.client_head_obj == None and self.rserver_data_sent:
                 self.reset_rserver()
                 self.logger.log('*** Request completed.\n')
@@ -184,6 +206,7 @@ class proxy_HTTP_Client:
     def run_rserver_loop(self):
         ""
         try:
+            #select rserver的socket
             res = select.select([self.rserver_socket.fileno()], [], [], 0.0)
         except (socket.error, ValueError):
             self.logger.log('*** Exception in select() on server socket.\n')
@@ -310,7 +333,7 @@ class proxy_HTTP_Client:
         self.logger.log('*** Sending client request header to remote server...')
         ok = self.client_head_obj.send(self.rserver_socket)
         if ok:
-            self.client_header_sent = 1
+            self.client_header_sent = 1  #设置flag表示header已经发送
             self.logger.log('Done.\n')
         else:
             self.rserver_socket_closed = 1

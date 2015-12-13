@@ -50,7 +50,7 @@ class ntlm_auther:
 
         connection.connect_rserver()
 
-        NTLM_msg1 = ntlm_messages.create_message1(env)
+        NTLM_msg1 = ntlm_messages.create_message1(env)  #创建type1协商消息
         connection.logger_auth.log(ntlm_messages.debug_message1(NTLM_msg1))
 
         tmp_client_head_obj = connection.client_head_obj.copy()
@@ -104,8 +104,8 @@ class ntlm_auther:
         if auth:
             msg2 = string.strip(string.split(auth[0])[1])
             connection.logger_auth.log(ntlm_messages.debug_message2(msg2))
-            nonce = ntlm_messages.parse_message2(msg2)
-            NTLM_msg3 = ntlm_messages.create_message3(nonce, env)
+            nonce = ntlm_messages.parse_message2(msg2)    #解析type2，chanallge-id消息
+            NTLM_msg3 = ntlm_messages.create_message3(nonce, env)  #构造type3，response消息给ntlm服务器
             connection.logger_auth.log(ntlm_messages.debug_message3(NTLM_msg3))
         else:
             NTLM_msg3 = ''
@@ -117,7 +117,7 @@ class ntlm_auther:
         connection.rserver_buffer = ''
         connection.logger.log('*** Remote server buffer flushed.\n')
         connection.logger.log('*** Sending Fake NTLM header (not body) with Msg3...')
-        tmp_client_head_obj.send(connection.rserver_socket)
+        tmp_client_head_obj.send(connection.rserver_socket)  #发送type3消息
         connection.logger.log('Done.\n')
         connection.logger.log('*** Fake NTLM header with Msg3:\n=====\n' + tmp_client_head_obj.__repr__())
 
