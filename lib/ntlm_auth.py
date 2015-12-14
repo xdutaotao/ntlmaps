@@ -1,3 +1,4 @@
+#--coding:utf-8--
 # This file is part of 'NTLM Authorization Proxy Server'
 # Copyright 2001 Dmitry A. Rozmanov <dima@xenon.spb.ru>
 #
@@ -50,7 +51,7 @@ class ntlm_auther:
 
         connection.connect_rserver()
 
-        NTLM_msg1 = ntlm_messages.create_message1(env)  #´´½¨type1Ð­ÉÌÏûÏ¢
+        NTLM_msg1 = ntlm_messages.create_message1(env)  #ï¿½ï¿½ï¿½ï¿½type1Ð­ï¿½ï¿½ï¿½ï¿½Ï¢
         connection.logger_auth.log(ntlm_messages.debug_message1(NTLM_msg1))
 
         tmp_client_head_obj = connection.client_head_obj.copy()
@@ -104,8 +105,8 @@ class ntlm_auther:
         if auth:
             msg2 = string.strip(string.split(auth[0])[1])
             connection.logger_auth.log(ntlm_messages.debug_message2(msg2))
-            nonce = ntlm_messages.parse_message2(msg2)    #½âÎötype2£¬chanallge-idÏûÏ¢
-            NTLM_msg3 = ntlm_messages.create_message3(nonce, env)  #¹¹Ôìtype3£¬responseÏûÏ¢¸øntlm·þÎñÆ÷
+            nonce = ntlm_messages.parse_message2(msg2)    #ï¿½ï¿½ï¿½ï¿½type2ï¿½ï¿½chanallge-idï¿½ï¿½Ï¢
+            NTLM_msg3 = ntlm_messages.create_message3(nonce, env)  #ï¿½ï¿½ï¿½ï¿½type3ï¿½ï¿½responseï¿½ï¿½Ï¢ï¿½ï¿½ntlmï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             connection.logger_auth.log(ntlm_messages.debug_message3(NTLM_msg3))
         else:
             NTLM_msg3 = ''
@@ -117,7 +118,7 @@ class ntlm_auther:
         connection.rserver_buffer = ''
         connection.logger.log('*** Remote server buffer flushed.\n')
         connection.logger.log('*** Sending Fake NTLM header (not body) with Msg3...')
-        tmp_client_head_obj.send(connection.rserver_socket)  #·¢ËÍtype3ÏûÏ¢
+        tmp_client_head_obj.send(connection.rserver_socket)  #ï¿½ï¿½ï¿½ï¿½type3ï¿½ï¿½Ï¢
         connection.logger.log('Done.\n')
         connection.logger.log('*** Fake NTLM header with Msg3:\n=====\n' + tmp_client_head_obj.__repr__())
 

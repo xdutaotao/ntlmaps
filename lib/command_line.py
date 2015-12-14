@@ -1,3 +1,4 @@
+#--coding:utf-8--
 # This file is part of 'NTLM Authorization Proxy Server'
 # This file Copyright 2012 Tony C. Heupel
 # NTLM Authorization Proxy Server is

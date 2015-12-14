@@ -1,3 +1,4 @@
+#--coding:utf-8--
 # This file is part of 'NTLM Authorization Proxy Server'
 # Copyright 2001 Dmitry A. Rozmanov <dima@xenon.spb.ru>
 #
@@ -97,7 +98,7 @@ class proxy_HTTP_Client:
 
         while(not self.stop_request):
 
-            # wait for data, rserverºÍclientµÄbuffer¶¼ÊÇ¿Õ
+            # wait for data, rserverï¿½ï¿½clientï¿½ï¿½bufferï¿½ï¿½ï¿½Ç¿ï¿½
             if not (self.rserver_buffer or self.client_buffer):
                 # if buffers are empty
                 """
@@ -111,47 +112,47 @@ class proxy_HTTP_Client:
                 # first try and have stop request because rserver_socket_closed==1
                 # So let's try change socket_closed to socket. which is None if there is no
                 # connection
-                if not self.rserver_socket_closed:   #rserverµÄsocketÎ´¹Ø±Õ
+                if not self.rserver_socket_closed:   #rserverï¿½ï¿½socketÎ´ï¿½Ø±ï¿½
                     try:
-                        #¼àÌýrserverºÍclientµÄsocket
+                        #ï¿½ï¿½ï¿½ï¿½rserverï¿½ï¿½clientï¿½ï¿½socket
                         select.select([self.rserver_socket.fileno(), self.client_socket.fileno()], [], [], 5.0)
                     except (socket.error, select.error, ValueError):
                         thread.exit()
                 else:
                     # if there is no connection to remote server
                     try:
-                        #Èç¹ûrserverµÄsocketÒÑ¹Ø±Õ£¬ÔòÖ»¼àÌýclientµÄsocket
+                        #ï¿½ï¿½ï¿½rserverï¿½ï¿½socketï¿½Ñ¹Ø±Õ£ï¿½ï¿½ï¿½Ö»ï¿½ï¿½ï¿½ï¿½clientï¿½ï¿½socket
                         select.select([self.client_socket.fileno()], [], [], 5.0)
                     except socket.error:
                         thread.exit()
 
-            # client part #ÏÈ¶ÁÈ¡client±ßµÄÏûÏ¢loop
+            # client part #ï¿½È¶ï¿½È¡clientï¿½ßµï¿½ï¿½ï¿½Ï¢loop
             self.run_client_loop()
 
             if self.tunnel_mode: self.tunnel_client_data()
 
-            #Èç¹ûclientµÄheaderÎ´·¢ËÍ£¬µ«ÊÇclient headÓÐÐ§
+            #ï¿½ï¿½ï¿½clientï¿½ï¿½headerÎ´ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½client headï¿½ï¿½Ð§
             if not self.client_header_sent and self.client_head_obj:
-                if not self.rserver_socket_closed:  #Èç¹ûrserver socketÓÐÐ§
+                if not self.rserver_socket_closed:  #ï¿½ï¿½ï¿½rserver socketï¿½ï¿½Ð§
                     # if connected we have to check whether we are connected to the right host.
                     # if not then close connection
                     self.check_connected_remote_server()  #
                 #if self.rserver_socket_closed:
                 if self.rserver_socket_closed:
                     # connect remote server if we have not yet
-                    self.connect_rserver() # Èç¹ûÓë´úÀí·þÎñÆ÷¶Ï¿ªÁË£¬ÔòÖØÐÂÁ¬½Ó
+                    self.connect_rserver() # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
                 self.log_url()
 
-                #¼ì²âÊÇ·ñ´ËÇëÇóÎªnotify.bluecoat.comµÄnotifyÇëÇó£¨ÐèÒª½«¶ÔÓ¦µÄnotifyÇëÇóÌæ»»ÎªacceptÇëÇó£¬À´Íê³ÉÑéÖ¤£©
+                #ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªnotify.bluecoat.comï¿½ï¿½notifyï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½notifyï¿½ï¿½ï¿½ï¿½ï¿½æ»»Îªacceptï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¤ï¿½ï¿½
                 self.check_bluecoat()
 
-                self.send_client_header()  #Á¬½ÓÍêºó£¬¾Í¿ÉÒÔ·¢ËÍclientµÄheader¸øproxyÁË£¬ÇÒÉèÖÃheaderÒÑ¾­·¢ËÍ±êÖ¾
+                self.send_client_header()  #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó£¬¾Í¿ï¿½ï¿½Ô·ï¿½ï¿½ï¿½clientï¿½ï¿½headerï¿½ï¿½proxyï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½headerï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½Í±ï¿½Ö¾
 
-            if self.client_header_sent and (not self.client_data_sent): #¼ÌÐø·¢ËÍdataµ½proxy
+            if self.client_header_sent and (not self.client_data_sent): #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½dataï¿½ï¿½proxy
                 self.send_client_data()
 
-            if self.client_data_sent and self.rserver_data_sent:  #Èç¹ûclientºÍrserverÉÏµÄdata¶¼ÒÑ¾­·¢ËÍÍê±Ï£¬ÔòÇå¿Õclientflag
+            if self.client_data_sent and self.rserver_data_sent:  #ï¿½ï¿½ï¿½clientï¿½ï¿½rserverï¿½Ïµï¿½dataï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½clientflag
                 # NOTE: we need to know if the request method is HEAD or CONNECT, so we cannot
                 # proceed to the next request header until response is not worked out
                 self.check_tunnel_mode()
@@ -159,27 +160,27 @@ class proxy_HTTP_Client:
 
             if self.config['DEBUG']['SCR_DEBUG']: print '\b.',
 
-            # Remote server part ÏÂÃæ¿ªÊ¼´¦Àírserver²¿·Ö
+            # Remote server part ï¿½ï¿½ï¿½æ¿ªÊ¼ï¿½ï¿½ï¿½ï¿½rserverï¿½ï¿½ï¿½ï¿½
             if not self.rserver_socket_closed:
                 # if there is a connection to remote server
                 self.run_rserver_loop()
 
             if self.tunnel_mode: self.tunnel_rserver_data()
 
-            #Èç¹ûheaderÎª·¢ËÍ£¬ÇÒheaderÓÐÐ§£¬Ôò½øÐÐauthÑéÖ¤
+            #ï¿½ï¿½ï¿½headerÎªï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½headerï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½authï¿½ï¿½Ö¤
             if (not self.rserver_header_sent) and self.rserver_head_obj:
                 self.auth_routine()                                # NTLM authorization
 
-            #Èç¹ûheaderÎ´·¢ËÍ£¬ÇÒheaderÓÐÐ§£¬Ôò¿ªÊ¼·¢ËÍrserverµÄheader²¿·Ö
+            #ï¿½ï¿½ï¿½headerÎ´ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½headerï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½rserverï¿½ï¿½headerï¿½ï¿½ï¿½ï¿½
             if (not self.rserver_header_sent) and self.rserver_head_obj:
                 self.send_rserver_header()
                 self.check_rserver_response()
 
-            #Èç¹ûrserverµÄheaderÒÑ¾­·¢ËÍÍê£¬Ôò¼ÌÐø·¢ËÍrserverµÄdata²¿·Ö
+            #ï¿½ï¿½ï¿½rserverï¿½ï¿½headerï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ê£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½rserverï¿½ï¿½dataï¿½ï¿½ï¿½ï¿½
             if self.rserver_header_sent and (not self.rserver_data_sent):
                 self.send_rserver_data()
 
-            #Èç¹ûclientµÄheader²»´æÔÚ£¬ÇÒrserverµÄdataÒÑ¾­·¢ËÍÍê£¬ÔòÇåµôrserverÕâÀïµÄflag£¬±íÊ¾rserver¶Ë´¦ÀíÍê
+            #ï¿½ï¿½ï¿½clientï¿½ï¿½headerï¿½ï¿½ï¿½ï¿½ï¿½Ú£ï¿½ï¿½ï¿½rserverï¿½ï¿½dataï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ê£¬ï¿½ï¿½ï¿½ï¿½ï¿½rserverï¿½ï¿½ï¿½ï¿½ï¿½flagï¿½ï¿½ï¿½ï¿½Ê¾rserverï¿½Ë´ï¿½ï¿½ï¿½ï¿½ï¿½
             if self.client_head_obj == None and self.rserver_data_sent:
                 self.reset_rserver()
                 self.logger.log('*** Request completed.\n')
@@ -206,7 +207,7 @@ class proxy_HTTP_Client:
     def run_rserver_loop(self):
         ""
         try:
-            #select rserverµÄsocket
+            #select rserverï¿½ï¿½socket
             res = select.select([self.rserver_socket.fileno()], [], [], 0.0)
         except (socket.error, ValueError):
             self.logger.log('*** Exception in select() on server socket.\n')
@@ -333,7 +334,7 @@ class proxy_HTTP_Client:
         self.logger.log('*** Sending client request header to remote server...')
         ok = self.client_head_obj.send(self.rserver_socket)
         if ok:
-            self.client_header_sent = 1  #ÉèÖÃflag±íÊ¾headerÒÑ¾­·¢ËÍ
+            self.client_header_sent = 1  #ï¿½ï¿½ï¿½ï¿½flagï¿½ï¿½Ê¾headerï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½
             self.logger.log('Done.\n')
         else:
             self.rserver_socket_closed = 1

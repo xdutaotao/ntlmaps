@@ -1,3 +1,4 @@
+#--coding:utf-8--
 # This file is Copyright 2004 Darryl A. Dixon <esrever_otua@pythonhacker.is-a-geek.net>
 # and is part of 'NTLM Authorization Proxy Server',
 # Copyright 2001 Dmitry A. Rozmanov <dima@xenon.spb.ru>
