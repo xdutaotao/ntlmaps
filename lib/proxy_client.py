@@ -1,4 +1,4 @@
-#--coding:utf-8--
+#-- coding:utf-8 --
 # This file is part of 'NTLM Authorization Proxy Server'
 # Copyright 2001 Dmitry A. Rozmanov <dima@xenon.spb.ru>
 #
@@ -98,7 +98,7 @@ class proxy_HTTP_Client:
 
         while(not self.stop_request):
 
-            # wait for data, rserver��client��buffer���ǿ�
+            # wait for data, rserver和client的buffer均为空
             if not (self.rserver_buffer or self.client_buffer):
                 # if buffers are empty
                 """
@@ -112,47 +112,47 @@ class proxy_HTTP_Client:
                 # first try and have stop request because rserver_socket_closed==1
                 # So let's try change socket_closed to socket. which is None if there is no
                 # connection
-                if not self.rserver_socket_closed:   #rserver��socketδ�ر�
+                if not self.rserver_socket_closed:   #rserver的socket已经连上
                     try:
-                        #����rserver��client��socket
+                        #监控rserver和client的socket句柄
                         select.select([self.rserver_socket.fileno(), self.client_socket.fileno()], [], [], 5.0)
                     except (socket.error, select.error, ValueError):
                         thread.exit()
                 else:
                     # if there is no connection to remote server
                     try:
-                        #���rserver��socket�ѹرգ���ֻ����client��socket
+                        #只检测client的socket句柄
                         select.select([self.client_socket.fileno()], [], [], 5.0)
                     except socket.error:
                         thread.exit()
 
-            # client part #�ȶ�ȡclient�ߵ���Ϣloop
+            # client part部分的数据接收处理
             self.run_client_loop()
 
             if self.tunnel_mode: self.tunnel_client_data()
 
-            #���client��headerδ���ͣ�����client head��Ч
+            #如果client的header并未发送
             if not self.client_header_sent and self.client_head_obj:
-                if not self.rserver_socket_closed:  #���rserver socket��Ч
+                if not self.rserver_socket_closed:  #如果rserver的socket未关闭
                     # if connected we have to check whether we are connected to the right host.
                     # if not then close connection
                     self.check_connected_remote_server()  #
                 #if self.rserver_socket_closed:
                 if self.rserver_socket_closed:
                     # connect remote server if we have not yet
-                    self.connect_rserver() # ��������������Ͽ��ˣ�����������
+                    self.connect_rserver() #如果rserver断开了，则尝试连接
 
                 self.log_url()
 
-                #����Ƿ������Ϊnotify.bluecoat.com��notify������Ҫ����Ӧ��notify�����滻Ϊaccept�����������֤��
+                #尝试修改notify.bluecoat.com的notify的NotifyPolicy直接为accepted的NotifyPolicy（相当于点击了同意）
                 self.check_bluecoat()
 
-                self.send_client_header()  #������󣬾Ϳ��Է���client��header��proxy�ˣ�������header�Ѿ����ͱ�־
+                self.send_client_header()  #发送client的header到rserver对应的socket上去
 
-            if self.client_header_sent and (not self.client_data_sent): #������data��proxy
+            if self.client_header_sent and (not self.client_data_sent): #继续发送client的data-body部分到proxy去
                 self.send_client_data()
 
-            if self.client_data_sent and self.rserver_data_sent:  #���client��rserver�ϵ�data���Ѿ�������ϣ������clientflag
+            if self.client_data_sent and self.rserver_data_sent:  #如果client和rserver的data都已经发送完
                 # NOTE: we need to know if the request method is HEAD or CONNECT, so we cannot
                 # proceed to the next request header until response is not worked out
                 self.check_tunnel_mode()
@@ -160,27 +160,27 @@ class proxy_HTTP_Client:
 
             if self.config['DEBUG']['SCR_DEBUG']: print '\b.',
 
-            # Remote server part ���濪ʼ����rserver����
+            # Remote server part
             if not self.rserver_socket_closed:
                 # if there is a connection to remote server
                 self.run_rserver_loop()
 
             if self.tunnel_mode: self.tunnel_rserver_data()
 
-            #���headerΪ���ͣ���header��Ч�������auth��֤
+            #如果rserver收到的header还未发送，则尝试进行auth3步验证
             if (not self.rserver_header_sent) and self.rserver_head_obj:
                 self.auth_routine()                                # NTLM authorization
 
-            #���headerδ���ͣ���header��Ч����ʼ����rserver��header����
+            #如果header未发送，则发送header
             if (not self.rserver_header_sent) and self.rserver_head_obj:
                 self.send_rserver_header()
                 self.check_rserver_response()
 
-            #���rserver��header�Ѿ������꣬�������rserver��data����
+            #然后继续发送rsever收到的data部分
             if self.rserver_header_sent and (not self.rserver_data_sent):
                 self.send_rserver_data()
 
-            #���client��header�����ڣ���rserver��data�Ѿ������꣬�����rserver�����flag����ʾrserver�˴�����
+            #如果client未收到header，且rserver的data已经发送完毕，则清除flag
             if self.client_head_obj == None and self.rserver_data_sent:
                 self.reset_rserver()
                 self.logger.log('*** Request completed.\n')
@@ -207,7 +207,7 @@ class proxy_HTTP_Client:
     def run_rserver_loop(self):
         ""
         try:
-            #select rserver��socket
+            #select rserver的socket
             res = select.select([self.rserver_socket.fileno()], [], [], 0.0)
         except (socket.error, ValueError):
             self.logger.log('*** Exception in select() on server socket.\n')
@@ -334,7 +334,7 @@ class proxy_HTTP_Client:
         self.logger.log('*** Sending client request header to remote server...')
         ok = self.client_head_obj.send(self.rserver_socket)
         if ok:
-            self.client_header_sent = 1  #����flag��ʾheader�Ѿ�����
+            self.client_header_sent = 1  #在发送完成client的header之后，设置flag
             self.logger.log('Done.\n')
         else:
             self.rserver_socket_closed = 1
