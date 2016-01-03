@@ -91,6 +91,28 @@ class proxy_HTTP_Client:
 
                 self.logger.log(" replace notify-key with accepted-key to URL: " + url)
 
+    def click_bluecoat_accept(self):
+        code=self.rserver_head_obj.get_http_code()
+        content_len=int(self.rserver_head_obj.get_param_values('Content-Length')[0])
+
+        #if content-lens match notifiy-response,will search accepted-link
+        if code == 200 and content_len == int(self.config['GENERAL']['NOTIFY_CONTENT_LEN']):
+            #这里需要读取response的所有的data
+            while not self.rserver_all_got:
+                self.run_rserver_loop()
+
+            #进行比对是否notify页面
+            res = re.search(self.config['GENERAL']['NOTIFY_REGX'],self.rserver_buffer)
+            if res and res.group(1): #完全match了，这时候丢掉buffer直接发送此GET给proxy，让proxy来处理
+                print(res.group(1))
+                tmp_header=http_header.HTTP_CLIENT_HEADER()
+                tmp_header.set_url(res.group(1))
+                tmp_header.send(self.rserver_socket) #直接发送
+
+                #清理
+                self.reset_rserver()
+
+
     #-----------------------------------------------------------------------
     def run(self):
         ""
@@ -144,9 +166,6 @@ class proxy_HTTP_Client:
 
                 self.log_url()
 
-                #尝试修改notify.bluecoat.com的notify的NotifyPolicy直接为accepted的NotifyPolicy（相当于点击了同意）
-                self.check_bluecoat()
-
                 self.send_client_header()  #发送client的header到rserver对应的socket上去
 
             if self.client_header_sent and (not self.client_data_sent): #继续发送client的data-body部分到proxy去
@@ -170,6 +189,10 @@ class proxy_HTTP_Client:
             #如果rserver收到的header还未发送，则尝试进行auth3步验证
             if (not self.rserver_header_sent) and self.rserver_head_obj:
                 self.auth_routine()                                # NTLM authorization
+
+            #如果header依然未发送给客户端，且返回的host来自notify.bluecoat.com则进行反向acccepted
+            if (not self.rserver_header_sent) and self.rserver_head_obj:
+                pass
 
             #如果header未发送，则发送header
             if (not self.rserver_header_sent) and self.rserver_head_obj:
@@ -214,7 +237,7 @@ class proxy_HTTP_Client:
             thread.exit()
         if res[0]:
             try:
-                socket_data = self.rserver_socket.recv(4096)
+                socket_data = self.rserver_socket.recv(8192)
             except:
                 socket_data = ''
                 self.logger.log('*** Exception in remote server recv() happend.\n')
